@@ -1,5 +1,5 @@
-﻿//Bug 1.保存文件时点取消会报异常= =
-//Bug 2.中文格式不对
+﻿//Bug 2.中文格式不对
+//进度条君未上线
 //仅支持下载= =
 using System;
 using System.Collections.Generic;
@@ -31,6 +31,7 @@ namespace QBox
         public MainPage()
         {
             this.InitializeComponent();
+            textBlock4.Text = "History\n";
         }
 
         public StorageFile newfile { get; private set; }
@@ -84,11 +85,18 @@ namespace QBox
                         savefile.FileTypeChoices.Add(new KeyValuePair<string, IList<string>>("file", new List<string> { extraname }));
                         savefile.SuggestedFileName = filename;
                         newfile = await savefile.PickSaveFileAsync();
+                        if (newfile == null)
+                        {
+                            textBlock1.Text = "You Did Not Save the File";
+                            textBlock4.Text += DateTime.Now.ToString() + " : Download " + filename + "   Unsaved\n";
+                            break;
+                        }
                         var writefile = await newfile.OpenTransactedWriteAsync();
                         await writefile.Stream.WriteAsync(filebuffer);
                         await writefile.CommitAsync();
                         //Fin.
                         textBlock1.Text = "Your File is Saved";
+                        textBlock4.Text += DateTime.Now.ToString() + " : Download " + filename + "   Saved\n";
                         break;
                     }
             }
