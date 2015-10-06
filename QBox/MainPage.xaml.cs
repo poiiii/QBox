@@ -13,6 +13,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.Web.Http;
+using Windows.Storage;
 
 //“空白页”项模板在 http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409 上有介绍
 
@@ -28,6 +29,8 @@ namespace QBox
             this.InitializeComponent();
         }
 
+        public StorageFile newfile { get; private set; }
+
         private async void Click_Here(object sender, RoutedEventArgs e)
         {
             var downcommond = "https://box.zjuqsc.com/item/get/";
@@ -36,7 +39,19 @@ namespace QBox
             var response = await boxclient.GetAsync(new Uri(downcommond + token));
             var content = response.Content;
             var filename = content.Headers.ContentDisposition.FileName;
+            var filebuffer = await content.ReadAsBufferAsync();
+            int dotpos = filename.LastIndexOf('.');
+            var extraname = filename.Substring(dotpos);
+            var savepicker = new Windows.Storage.Pickers.FileSavePicker();
+            savepicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+            savepicker.FileTypeChoices.Add(new KeyValuePair<string, IList<string>>("file", new List<string> { extraname }));
+            savepicker.SuggestedFileName = filename;
+            newfile = await savepicker.PickSaveFileAsync();
+            var writestream = await newfile.OpenTransactedWriteAsync();
+            await writestream.Stream.WriteAsync(filebuffer);
+            await writestream.CommitAsync();
             textBlock1.Text = "Your Download File Name is " + filename;
+
         }
     }
 }
