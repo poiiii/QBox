@@ -1,5 +1,4 @@
-﻿//Bug 2.中文格式不对
-//进度条君未上线
+﻿//进度条君未上线
 //仅支持下载= =
 using System;
 using System.Collections.Generic;
@@ -39,6 +38,12 @@ namespace QBox
         public static string downcommond = "https://box.zjuqsc.com/item/get/";
         public static string downcheck = "https://api.zjuqsc.com/box/get_api/";
 
+        public static char exchange(string str)
+        {
+            //Change into Chinese
+            return (char)int.Parse(str, System.Globalization.NumberStyles.HexNumber);
+        }
+
         private async void Click_Here(object sender, RoutedEventArgs e)
         {
             //BoxClient_api
@@ -71,15 +76,29 @@ namespace QBox
                         int end = filename.IndexOf(",");
                         filename = filename.Substring(0, end - 1);
                         var extraname = filename.Substring(filename.LastIndexOf('.'));
+                        var headname = filename.Substring(0, filename.LastIndexOf('.'));
+
+                        //Change Filename
+                        int pos;
+                        var tmpstr = headname;
+                        headname = "";
+                        while (tmpstr.IndexOf('\\') != -1)
+                        {
+                            pos = tmpstr.IndexOf('\\');
+                            headname += tmpstr.Substring(0, pos) + exchange(tmpstr.Substring(pos + 2, 4));
+                            tmpstr = tmpstr.Substring(pos + 6);
+                        }
+                        headname += tmpstr;
+                        filename = headname + extraname;
 
                         //BoxClient_getfile
                         textBlock1.Text = "Your Downloading File Name is " + filename + "\nPlease Waiting...";
                         response = await boxclient.GetAsync(new Uri(downcommond + token));
                         content = response.Content;
                         var filebuffer = await content.ReadAsBufferAsync();
-
+                        
                         //Save File
-                        textBlock1.Text = "Your File Name is Downloaded\nChoose a Path to Save It";
+                        textBlock1.Text = "Your File is Downloaded\nChoose a Path to Save It";
                         var savefile = new Windows.Storage.Pickers.FileSavePicker();
                         savefile.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
                         savefile.FileTypeChoices.Add(new KeyValuePair<string, IList<string>>("file", new List<string> { extraname }));
@@ -94,6 +113,7 @@ namespace QBox
                         var writefile = await newfile.OpenTransactedWriteAsync();
                         await writefile.Stream.WriteAsync(filebuffer);
                         await writefile.CommitAsync();
+
                         //Fin.
                         textBlock1.Text = "Your File is Saved";
                         textBlock4.Text += DateTime.Now.ToString() + " : Download " + filename + "   Saved\n";
